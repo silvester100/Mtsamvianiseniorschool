@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Digital Archive</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background-color: #f8fcff; }
+    .archive-box {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 30px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    }
+    .file-card {
+      border-left: 4px solid #0d6efd;
+      padding: 15px;
+      background: #f9fbfe;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+<div class="archive-box">
+  <h4 class="text-center text-primary mb-4">Digital Archive</h4>
+
+  {% set privileged = ['teacher','admin','principal','deputy'] %}
+  {% set graduate_roles = ['admin','principal','deputy'] %}
+
+  <!-- Upload Form: only for teacher/admin/principal/deputy -->
+  {% if role in privileged %}
+  <form method="post" action="/upload_archive" enctype="multipart/form-data" class="mb-4">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">File</label>
+        <input type="file" name="file" class="form-control" required />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Category</label>
+        <select name="category" class="form-select" required>
+          <option value="notes">Notes</option>
+          <option value="past_paper">Past Paper</option>
+          <option value="animation">Animation</option>
+          <option value="document">Document</option>
+          <option value="audio">Audio</option>
+          <option value="video">Video</option>
+          {% if role in graduate_roles %}
+          <option value="graduate">Graduate</option>
+          {% endif %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Visibility</label>
+        <select name="visibility" class="form-select">
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-grid">
+        <label class="form-label">&nbsp;</label>
+        <button type="submit" class="btn btn-primary">Upload</button>
+      </div>
+    </div>
+  </form>
+  {% endif %}
+
+  <!-- Archive Listing -->
+  {% if files %}
+    {% for file in files %}
+      {% set cat = file.category %}
+      {# Determine if this file should be visible #}
+      {% if
+           (cat == 'graduate' and role in graduate_roles)
+        or (cat != 'graduate'
+            and (file.visibility == 'public' 
+                 or role in privileged))
+      %}
+      <div class="file-card" data-category="{{ cat }}">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ file.name }}</strong><br />
+            <small class="text-muted">
+              {{ file.category|capitalize }} |
+              Uploaded by {{ file.uploader }} |
+              {{ file.visibility|capitalize }}
+            </small>
+          </div>
+          <a href="{{ url_for('download_archive', filename=file.filename) }}"
+             class="btn btn-sm btn-outline-primary">
+            Download
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    <p class="text-muted text-center">No files available in the archive.</p>
+  {% endif %}
+</div>
+</body>
+</html>
