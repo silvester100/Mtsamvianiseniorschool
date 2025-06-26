@@ -1,0 +1,105 @@
+<!-- setup_timetable.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Timetable</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .suggestion { background-color: #e0f7fa; }
+    .warning { background-color: #fff3cd; }
+  </style>
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+  <h2 class="mb-4">📅 Setup Timetable</h2>
+
+  <form method="POST">
+    <div class="row mb-3">
+      <div class="col">
+        <label for="class" class="form-label">Stream</label>
+        <select name="class" id="class" class="form-select" required>
+          {% for c in classes %}
+            <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col">
+        <label for="subject" class="form-label">Subject</label>
+        <select name="subject" id="subject" class="form-select" required>
+          {% for subj in subjects %}
+            <option value="{{ subj.subject }}" data-weight="{{ subj.weight }}">{{ subj.subject }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col">
+        <label for="teacher" class="form-label">Teacher</label>
+        <select name="teacher" id="teacher" class="form-select" required>
+          {% for t in teachers %}
+            <option value="{{ t.username }}">{{ t.fullname }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col">
+        <label for="day" class="form-label">Day</label>
+        <select name="day" id="day" class="form-select" required>
+          <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+          <option>Thursday</option><option>Friday</option>
+        </select>
+      </div>
+      <div class="col">
+        <label for="start" class="form-label">Start Time</label>
+        <input type="time" name="start" class="form-control" required>
+      </div>
+      <div class="col">
+        <label for="end" class="form-label">End Time</label>
+        <input type="time" name="end" class="form-control" required>
+      </div>
+    </div>
+
+    {% if suggestion %}
+    <div class="alert alert-info">
+      <strong>Suggested slots for this subject ({{ weight }}) → Needs {{ target }} times/week</strong>
+      <ul>
+        {% for slot in suggestion %}
+          <li class="suggestion">{{ slot.day }}: {{ slot.start }}–{{ slot.end }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if warning %}
+    <div class="alert alert-warning">
+      ⚠️ {{ warning }}
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary"><i class="fa fa-plus"></i> Add Slot</button>
+  </form>
+
+  <hr>
+
+  <h4>Current Timetable for Selected Stream</h4>
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Day</th><th>Start</th><th>End</th><th>Subject</th><th>Teacher</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in timetable %}
+      <tr class="{% if row.warning %}warning{% endif %}">
+        <td>{{ row.day }}</td><td>{{ row.start }}</td><td>{{ row.end }}</td>
+        <td>{{ row.subject }}</td><td>{{ row.teacher }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>
