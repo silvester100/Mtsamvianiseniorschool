@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Timetable</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f8f9fa; padding: 2em; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 2em; }
+    th, td { padding: 0.8em; border: 1px solid #ccc; text-align: center; }
+    th { background: #007bff; color: white; }
+    form { margin-top: 2em; }
+    input, select { padding: 0.5em; margin: 0.5em; }
+    button { padding: 0.6em 1.2em; background: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h2>Manage Timetable</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Day</th>
+        <th>Period</th>
+        <th>Subject</th>
+        <th>Teacher</th>
+        <th>Class</th>
+        <th>Stream</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in timetable %}
+      <tr>
+        <td>{{ row.day }}</td>
+        <td>{{ row.period }}</td>
+        <td>{{ row.subject }}</td>
+        <td>{{ row.teacher_id }}</td>
+        <td>{{ row.class_name }}</td>
+        <td>{{ row.stream }}</td>
+        <td>
+          <a href="/edit_timetable_entry/{{ row.id }}">Edit</a> |
+          <a href="/delete_timetable_entry/{{ row.id }}" onclick="return confirm('Are you sure?')">Delete</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Add New Entry</h3>
+  <form action="/add_timetable_entry" method="POST">
+    <label>Day:</label>
+    <select name="day">
+      <option>Monday</option>
+      <option>Tuesday</option>
+      <option>Wednesday</option>
+      <option>Thursday</option>
+      <option>Friday</option>
+    </select>
+    <label>Period:</label>
+    <input type="number" name="period" required>
+    <label>Subject:</label>
+    <input type="text" name="subject" required>
+    <label>Teacher ID:</label>
+    <input type="number" name="teacher_id" required>
+    <label>Class:</label>
+    <input type="text" name="class_name" required>
+    <label>Stream:</label>
+    <input type="text" name="stream" required>
+    <button type="submit">Add Entry</button>
+  </form>
+</body>
+</html>
