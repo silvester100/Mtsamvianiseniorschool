@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background-color: #ffffff; }
+    .navbar {
+      background-color: #007bff;
+      color: white;
+      padding: 1em 2em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar h1 { margin: 0; font-size: 1.5em; }
+    .container {
+      padding: 2em;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5em;
+      margin-bottom: 2em;
+    }
+    .card {
+      background: #e9f3ff;
+      border-radius: 12px;
+      padding: 1.5em;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    }
+    .card i {
+      font-size: 2em;
+      margin-bottom: 0.5em;
+      color: #007bff;
+    }
+    select, button {
+      padding: 0.7em;
+      margin: 0.5em 0.3em;
+      font-size: 1em;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover { background: #0056b3; }
+    .error { color: red; font-weight: bold; display: none; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h1>Admin Dashboard</h1>
+    <div>{{ greeting }}, {{ first_name }}</div>
+  </div>
+
+  <div class="container">
+    <div class="card-grid">
+      <div class="card" onclick="location.href='/register_student'">
+        <i class="fas fa-user-plus"></i>
+        <p>Register Student</p>
+      </div>
+      <div class="card" onclick="location.href='/view_block_timetable'">
+        <i class="fas fa-calendar-alt"></i>
+        <p>Manage Timetable</p>
+      </div>
+      <div class="card" onclick="location.href='/view_archive'">
+        <i class="fas fa-archive"></i>
+        <p>Archives</p>
+      </div>
+      <div class="card" onclick="location.href='/manage_teachers'">
+        <i class="fas fa-chalkboard-teacher"></i>
+        <p>Manage Teachers</p>
+      </div>
+      <div class="card" onclick="location.href='/manage_streams'">
+        <i class="fas fa-layer-group"></i>
+        <p>Manage Streams</p>
+      </div>
+    </div>
+
+    <h3>Generate Report Card</h3>
+    <label for="studentSelect">Select Student:</label>
+    <select id="studentSelect">
+      {% for student in students %}
+      <option value="{{ student.id }}">{{ student.first_name }} {{ student.surname }} {{ student.last_name }} - {{ student.class_name }} {{ student.stream }}</option>
+      {% endfor %}
+    </select>
+    <br>
+    <button onclick="generateReport()">
+      <i class="fas fa-file-pdf"></i> Download Report
+    </button>
+    <button onclick="generateAllReports()">
+      <i class="fas fa-print"></i> Download All Reports
+    </button>
+    <div id="errorMsg" class="error">Something went wrong while generating the report. Please check server logs.</div>
+  </div>
+
+  <script>
+    function showError() {
+      document.getElementById("errorMsg").style.display = "block";
+    }
+
+    function generateReport() {
+      const studentId = document.getElementById('studentSelect').value;
+      fetch('/get_report_data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: studentId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        fetch('/generate-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${data.student.name}_report_card.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        })
+        .catch(showError);
+      })
+      .catch(showError);
+    }
+
+    function generateAllReports() {
+      const studentOptions = document.querySelectorAll('#studentSelect option');
+      const students = Array.from(studentOptions).map(opt => ({ id: opt.value, name: opt.textContent }));
+
+      students.forEach((student, index) => {
+        setTimeout(() => {
+          fetch('/get_report_data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: student.id })
+          })
+          .then(res => res.json())
+          .then(data => {
+            fetch('/generate-report', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            })
+            .then(response => response.blob())
+            .then(blob => {
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${data.student.name}_report_card.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+            })
+            .catch(showError);
+          })
+          .catch(showError);
+        }, index * 1000);
+      });
+    }
+  </script>
+</body>
+</html>
