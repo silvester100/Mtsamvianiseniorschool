@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>View Students</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .student-card {
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+      padding: 15px;
+      background: white;
+      margin-bottom: 20px;
+      transition: 0.2s ease-in-out;
+    }
+    .student-card:hover {
+      box-shadow: 0 0 15px rgba(0,0,0,0.08);
+    }
+    .student-photo {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+  <h4 class="mb-4 text-primary text-center">Registered Students</h4>
+
+  <!-- Filter -->
+  <form method="get" class="row mb-4">
+    <div class="col-md-4 mb-2">
+      <select class="form-select" name="class_filter">
+        <option value="">-- Filter by Class --</option>
+        {% for class_name in class_list %}
+        <option value="{{ class_name }}" {% if class_filter == class_name %}selected{% endif %}>{{ class_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4 mb-2">
+      <select class="form-select" name="stream_filter">
+        <option value="">-- Filter by Stream --</option>
+        {% for stream in stream_list %}
+        <option value="{{ stream }}" {% if stream_filter == stream %}selected{% endif %}>{{ stream }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4 mb-2 d-grid">
+      <button type="submit" class="btn btn-primary">Apply Filter</button>
+    </div>
+  </form>
+
+  <!-- Students -->
+  <div class="row">
+    {% for student in students %}
+    <div class="col-md-6 col-lg-4">
+      <div class="student-card d-flex align-items-center">
+        <img src="{{ url_for('static', filename=student.photo) if student.photo else url_for('static', filename='default.jpg') }}" class="student-photo me-3" alt="Photo" />
+        <div>
+          <h6 class="mb-1">{{ student.first_name }} {{ student.surname }} {{ student.last_name }}</h6>
+          <small>Class: {{ student.class_name }} - {{ student.stream_name }}</small><br/>
+          <small>DOB: {{ student.dob }}</small><br/>
+          <small>Guardian: {{ student.guardian_name }} ({{ student.guardian_phone }})</small>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+      <p class="text-muted text-center">No students found.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+</body>
+</html>
