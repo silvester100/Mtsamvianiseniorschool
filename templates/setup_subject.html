@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Setup Subjects - Admin Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f8fc;
+            margin: 0;
+            padding: 0;
+        }
+        .topbar {
+            background-color: #0d6efd;
+            padding: 1rem;
+            color: white;
+            font-size: 1.2rem;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+        form {
+            margin-bottom: 2rem;
+        }
+        label {
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 0.5rem;
+            margin-top: 0.3rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #0d6efd;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #084298;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #0d6efd;
+            color: white;
+        }
+        .actions i {
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .actions i:hover {
+            color: #084298;
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <i class="fas fa-book"></i> Setup Subjects
+</div>
+
+<div class="container">
+    <h2><i class="fas fa-plus-circle"></i> Add New Subject</h2>
+    <form action="/admin/setup-subjects" method="POST">
+        <label for="subject_name">Subject Name</label>
+        <input type="text" id="subject_name" name="subject_name" required>
+
+        <label for="class">Class</label>
+        <select id="class" name="class" required>
+            <option value="">-- Select Class --</option>
+            {% for c in classes %}
+            <option value="{{ c }}">{{ c }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="stream">Stream</label>
+        <select id="stream" name="stream" required>
+            <option value="">-- Select Stream --</option>
+            {% for s in streams %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="teacher_id">Assign Teacher</label>
+        <select id="teacher_id" name="teacher_id" required>
+            <option value="">-- Select Teacher --</option>
+            {% for teacher in teachers %}
+            <option value="{{ teacher.id }}">{{ teacher.full_name }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit"><i class="fas fa-save"></i> Save Subject</button>
+    </form>
+
+    <h2><i class="fas fa-list"></i> Existing Subjects</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Subject</th>
+                <th>Class</th>
+                <th>Stream</th>
+                <th>Teacher</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subject in subjects %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ subject.name }}</td>
+                <td>{{ subject.class_name }}</td>
+                <td>{{ subject.stream }}</td>
+                <td>{{ subject.teacher_name }}</td>
+                <td class="actions">
+                    <a href="/admin/edit-subject/{{ subject.id }}"><i class="fas fa-edit"></i></a>
+                    <a href="/admin/delete-subject/{{ subject.id }}" onclick="return confirm('Are you sure?');"><i class="fas fa-trash-alt"></i></a>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No subjects found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
