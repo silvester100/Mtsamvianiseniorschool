@@ -1,5 +1,3 @@
-# db.py
-
 import mysql.connector
 from models import Student
 from datetime import datetime
@@ -167,6 +165,31 @@ def delete_subject_by_id(subject_id):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM subjects WHERE id = %s", (subject_id,))
+    conn.commit()
+    conn.close()
+
+def get_subject_by_id(subject_id):
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT subjects.id, subjects.name, subjects.class_name, subjects.stream, subjects.teacher_id,
+               users.first_name, users.surname, users.last_name
+        FROM subjects
+        JOIN users ON subjects.teacher_id = users.id
+        WHERE subjects.id = %s
+    """, (subject_id,))
+    subject = cursor.fetchone()
+    conn.close()
+    return subject
+
+def update_subject(subject_id, name, class_name, stream, teacher_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE subjects
+        SET name = %s, class_name = %s, stream = %s, teacher_id = %s
+        WHERE id = %s
+    """, (name, class_name, stream, teacher_id, subject_id))
     conn.commit()
     conn.close()
 
