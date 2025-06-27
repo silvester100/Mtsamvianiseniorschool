@@ -3,8 +3,7 @@ from db import initialize_db, add_otp, verify_otp, get_connection, get_all_stude
 from utils.report_card_generator import generate_report_card_pdf
 from routes.admin_routes import admin_bp
 from routes.auth_routes import auth_bp
-# from routes.teacher_routes import teacher_bp # (optional)
-
+from routes.setup_subject_routes import setup_subject_routes  # ✅ Added subject routes
 from datetime import datetime, timedelta
 import random, string
 
@@ -14,9 +13,9 @@ app.secret_key = 'your_secret_key_here'
 # === BLUEPRINTS ===
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
-# app.register_blueprint(teacher_bp)
+app.register_blueprint(setup_subject_routes)  # ✅ Registered subject routes
 
-# === OTP Routes (in case you want fallback login inline) ===
+# === OTP Routes ===
 @app.route('/')
 def home():
     return render_template('request_otp.html')
