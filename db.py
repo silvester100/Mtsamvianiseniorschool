@@ -1,3 +1,5 @@
+# db.py
+
 import mysql.connector
 from models import Student
 from datetime import datetime
@@ -39,6 +41,14 @@ def get_user_by_email(email):
     conn.close()
     return user
 
+def get_all_teachers():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id, first_name, surname, last_name FROM users WHERE role = 'teacher'")
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
 # === STUDENTS ===
 def add_student(student: Student):
     conn = get_connection()
@@ -71,10 +81,10 @@ def get_student_by_id(student_id):
 def get_all_classes():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM classes")
-    result = cursor.fetchall()
+    cursor.execute("SELECT DISTINCT class_name FROM students ORDER BY class_name")
+    result = [row[0] for row in cursor.fetchall()]
     conn.close()
-    return [r[0] for r in result]
+    return result
 
 def add_class(name):
     conn = get_connection()
@@ -93,10 +103,10 @@ def delete_class(name):
 def get_all_streams():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM streams")
-    result = cursor.fetchall()
+    cursor.execute("SELECT DISTINCT stream FROM students ORDER BY stream")
+    result = [r[0] for r in cursor.fetchall()]
     conn.close()
-    return [r[0] for r in result]
+    return result
 
 def add_stream(name):
     conn = get_connection()
@@ -129,25 +139,34 @@ def get_streams_by_class(class_name):
     return [r[0] for r in result]
 
 # === SUBJECTS ===
-def get_all_subjects():
+def insert_subject(subject_name, class_name, stream, teacher_id):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT name FROM subjects")
-    result = cursor.fetchall()
-    conn.close()
-    return [r[0] for r in result]
-
-def add_subject(name):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO subjects (name) VALUES (%s)", (name,))
+    cursor.execute("""
+        INSERT INTO subjects (name, class_name, stream, teacher_id)
+        VALUES (%s, %s, %s, %s)
+    """, (subject_name, class_name, stream, teacher_id))
     conn.commit()
     conn.close()
 
-def delete_subject(name):
+def get_all_subjects():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT subjects.id, subjects.name, subjects.class_name, subjects.stream,
+               users.first_name, users.surname, users.last_name
+        FROM subjects
+        JOIN users ON subjects.teacher_id = users.id
+        ORDER BY class_name, stream, subjects.name
+    """)
+    result = cursor.fetchall()
+    conn.close()
+    return result
+
+def delete_subject_by_id(subject_id):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM subjects WHERE name = %s", (name,))
+    cursor.execute("DELETE FROM subjects WHERE id = %s", (subject_id,))
     conn.commit()
     conn.close()
 
@@ -258,7 +277,11 @@ def initialize_db():
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS subjects (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(50) UNIQUE
+            name VARCHAR(50),
+            class_name VARCHAR(20),
+            stream VARCHAR(20),
+            teacher_id INT,
+            FOREIGN KEY (teacher_id) REFERENCES users(id)
         )
     """)
 
