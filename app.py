@@ -1,19 +1,37 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, send_file, flash
-from db import initialize_db, add_otp, verify_otp, get_connection, get_all_students, get_timetable_by_teacher, get_streams_by_class, get_student_by_id, get_student_marks, migrate_students
+from db import (
+    initialize_db,
+    ensure_developer_account_exists,
+    add_otp,
+    verify_otp,
+    get_connection,
+    get_all_students,
+    get_timetable_by_teacher,
+    get_streams_by_class,
+    get_student_by_id,
+    get_student_marks,
+    migrate_students
+)
 from utils.report_card_generator import generate_report_card_pdf
 from routes.admin_routes import admin_bp
 from routes.auth_routes import auth_bp
-from routes.setup_subject_routes import setup_subject_routes  # ✅ Added subject routes
+from routes.setup_subject_routes import setup_subject_routes
+from routes.developer_routes import developer_bp  # ✅ Added developer blueprint
 from datetime import datetime, timedelta
 import random, string
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
+# ✅ Initialize DB and Ensure Developer Exists
+initialize_db()
+ensure_developer_account_exists()
+
 # === BLUEPRINTS ===
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
-app.register_blueprint(setup_subject_routes)  # ✅ Registered subject routes
+app.register_blueprint(setup_subject_routes)
+app.register_blueprint(developer_bp)  # ✅ Registered developer routes
 
 # === OTP Routes ===
 @app.route('/')
@@ -88,8 +106,8 @@ def deputy_dashboard():
     return render_template('deputy_dashboard.html', greeting=get_greeting(), first_name=session.get('first_name'))
 
 @app.route('/developer_dashboard')
-def developer_dashboard():
-    return render_template('developer_dashboard.html', greeting=get_greeting(), first_name=session.get('first_name'))
+def developer_dashboard_redirect():
+    return redirect('/developer_dashboard')
 
 # === STUDENT PROMOTION ===
 @app.route('/promote_students')
@@ -170,5 +188,4 @@ def get_greeting():
 
 # === BOOTSTRAP APP ===
 if __name__ == '__main__':
-    initialize_db()
     app.run(debug=True)
