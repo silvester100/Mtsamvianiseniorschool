@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Developer File Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f8fc;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            color: #0d6efd;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        li {
+            padding: 0.75rem 1rem;
+            border: 1px solid #ddd;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f9f9f9;
+        }
+
+        li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+        }
+
+        li a:hover {
+            text-decoration: underline;
+        }
+
+        .fa-file-code {
+            color: #0d6efd;
+            margin-right: 0.5rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #0d6efd;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/developer_dashboard" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        <h2><i class="fas fa-folder-open"></i> Developer Files</h2>
+        <ul>
+            {% for file in files %}
+            <li>
+                <span><i class="fas fa-file-code"></i>{{ file }}</span>
+                <a href="{{ url_for('developer.edit_file', filename=file) }}">
+                    <i class="fas fa-pen-to-square"></i> Edit
+                </a>
+            </li>
+            {% else %}
+            <li>No editable files found.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
