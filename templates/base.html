@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}{% endblock %} – International School</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+  <style>
+    /*... Your existing base styles ...*/
+
+    /* Success animation container */
+    #success-animation {
+      display: none;
+      position: fixed;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+    }
+    #success-animation svg {
+      width: 120px;
+      height: 120px;
+    }
+    .circle-bg {
+      stroke: #e6e6e6;
+      stroke-width: 10;
+      fill: none;
+    }
+    .circle-fg {
+      stroke: #28a745;
+      stroke-width: 10;
+      fill: none;
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      transition: stroke-dashoffset 0.6s ease-out;
+    }
+    .check-mark {
+      stroke: #28a745;
+      stroke-width: 8;
+      fill: none;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      opacity: 0;
+      transition: stroke-dashoffset 0.3s 0.6s ease-out, opacity 0.3s 0.6s ease-out;
+    }
+  </style>
+</head>
+<body>
+  {% block sidebar %}{% endblock %}
+  <main class="main-content">
+    <header class="header">
+      <h1>Welcome, {{ session.user_name }}</h1>
+      <p>{% block subtitle %}{% endblock %}</p>
+    </header>
+    {% block content %}
+    {% if recent_activity %}
+      <!-- Recent activity section... -->
+    {% endif %}
+    {% endblock %}
+  </main>
+
+  <!-- ✅ Success Animation -->
+  <div id="success-animation">
+    <svg viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="45" class="circle-bg"></circle>
+      <circle cx="50" cy="50" r="45" class="circle-fg"></circle>
+      <polyline points="30,55 45,70 70,40" class="check-mark"></polyline>
+    </svg>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const flashes = {{ get_flashed_messages(with_categories=true)|tojson }};
+      if (flashes.some(f => f[0] === "success")) {
+        const wrapper = document.getElementById("success-animation");
+        const fg = wrapper.querySelector(".circle-fg");
+        const ck = wrapper.querySelector(".check-mark");
+        wrapper.style.display = "block";
+        setTimeout(() => {
+          fg.style.strokeDashoffset = "0";
+        }, 50);
+        fg.addEventListener("transitionend", () => {
+          ck.style.opacity = "1";
+          ck.style.strokeDashoffset = "0";
+        });
+        setTimeout(() => {
+          wrapper.style.display = "none";
+        }, 2000);
+      }
+    });
+  </script>
+</body>
+</html>
