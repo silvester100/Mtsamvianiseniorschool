@@ -245,6 +245,16 @@ def migrate_students():
 def initialize_db():
     conn = get_connection()
     cursor = conn.cursor()
+    
+  cursor.execute("""
+    CREATE TABLE IF NOT EXISTS developer_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(100),
+        action TEXT,
+        filename VARCHAR(255),
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+""")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
