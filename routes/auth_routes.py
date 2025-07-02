@@ -1,48 +1,85 @@
-# routes/auth_routes.py
+from flask import Blueprint, request, session, redirect, url_for, render_template, flash
+from app import db
+from models import User
+from db import add_otp, validate_otp, get_user_by_email, log_activity
+import random
+from datetime import timedelta
 
-from flask import Blueprint, render_template, request, redirect, session, jsonify
-from db import add_otp, verify_otp, get_connection
-from datetime import datetime, timedelta
-import random, string
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
-auth_bp = Blueprint('auth', __name__)
+# === Send OTP (simulate via console or real email API) ===
+@auth_bp.route('/send-otp', methods=['POST'])
+def send_otp():
+    email = request.form.get('email')
+    user = get_user_by_email(email)
 
-# === Home/Login ===
-@auth_bp.route('/')
-def home():
-    return render_template('request_otp.html')
+    if not user:
+        flash("No account found with that email.", "danger")
+        return redirect(url_for('auth.login'))
 
-# === Generate OTP Code ===
-def generate_otp_code():
-    return ''.join(random.choices(string.digits, k=6))
+    code = str(random.randint(100000, 999999))
+    add_otp(email=email, code=code)
 
-@auth_bp.route('/request_otp', methods=['POST'])
-def request_otp():
-    email = request.form['email']
-    otp_code = generate_otp_code()
-    expiration = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S')
-    add_otp(email, otp_code, expiration)
-    return jsonify({"status": "sent", "otp": otp_code})
+    # Simulate sending email (real app should send via SMTP or SendGrid)
+    print(f"OTP for {email} is {code}")
 
-@auth_bp.route('/verify_otp', methods=['POST'])
-def verify_otp_route():
-    email = request.form['email']
-    code = request.form['code']
-    if verify_otp(email, code):
-        session['email'] = email
-        conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT role, first_name FROM users WHERE email = %s", (email,))
-        user = cursor.fetchone()
-        conn.close()
-        if not user:
-            return "User not found", 404
-        session['role'] = user['role']
-        session['first_name'] = user['first_name']
-        return redirect(f"/{user['role']}_dashboard")
-    return "OTP Invalid or Expired"
+    session['email'] = email
+    flash("OTP sent to your email.", "success")
+    return redirect(url_for('auth.verify_otp'))
 
+# === OTP Verification ===
+@auth_bp.route('/verify-otp', methods=['GET', 'POST'])
+def verify_otp():
+    if request.method == 'POST':
+        code = request.form.get('otp')
+        email = session.get('email')
+
+        if validate_otp(email, code):
+            user = get_user_by_email(email)
+            session['user_id'] = user.id
+            session['role'] = user.role
+            session.permanent = True
+            session.modified = True
+
+            log_activity(user.id, f"{user.role} logged in")
+
+            # Redirect based on role
+            if user.role == 'admin':
+                return redirect('/admin/dashboard')
+            elif user.role == 'teacher':
+                return redirect('/teacher/dashboard')
+            elif user.role == 'guardian':
+                return redirect('/guardian/dashboard')
+            elif user.role == 'student':
+                return redirect('/guardian/student-dashboard')  # Student logs in via guardian
+            elif user.role == 'bursar':
+                return redirect('/bursar/dashboard')
+            elif user.role == 'principal':
+                return redirect('/principal/dashboard')
+            elif user.role == 'deputy':
+                return redirect('/deputy/dashboard')
+            elif user.role == 'developer':
+                return redirect('/developer/dashboard')
+            else:
+                flash("Unknown role.", "warning")
+                return redirect(url_for('auth.login'))
+        else:
+            flash("Invalid or expired OTP.", "danger")
+            return redirect(url_for('auth.verify_otp'))
+
+    return render_template('auth/verify_otp.html')
+
+# === Login page (email input) ===
+@auth_bp.route('/login', methods=['GET'])
+def login():
+    return render_template('auth/login.html')
+
+# === Logout ===
 @auth_bp.route('/logout')
 def logout():
+    user_id = session.get('user_id')
+    if user_id:
+        log_activity(user_id, "Logged out")
     session.clear()
-    return redirect('/')
+    flash("You have been logged out.", "info")
+    return redirect(url_for('auth.login'))
