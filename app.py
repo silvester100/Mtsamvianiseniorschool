@@ -1,58 +1,50 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_mail import Mail
-from flask_session import Session
-from datetime import timedelta
+from flask_migrate import Migrate
+from flask_cors import CORS
+from dotenv import load_dotenv
 import os
 
-# Initialize Flask app
+# Load environment variables
+load_dotenv()
+
+# Init app
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'dev_secret')
+app.secret_key = os.getenv("SECRET_KEY")
 
-# === POSTGRESQL DATABASE CONFIG ===
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:yourpassword@localhost/school_db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Enable CORS if mobile/web access is needed
+CORS(app)
 
-# === SESSION CONFIG ===
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=5)
-app.config['SESSION_TYPE'] = 'filesystem'
+# Configure MySQL
+app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# === EMAIL CONFIG (OTP Support) ===
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USER')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASS')
-
-# === INIT EXTENSIONS ===
+# Init DB and migration
 db = SQLAlchemy(app)
-mail = Mail(app)
-Session(app)
+migrate = Migrate(app, db)
 
-# === IMPORT BLUEPRINTS ===
-from auth_routes import auth_bp
-from admin_routes import admin_bp
-from teacher_routes import teacher_bp
-from guardian_routes import guardian_bp
-from bursar_routes import bursar_bp
-from principal_routes import principal_bp
-from deputy_routes import deputy_bp
-from developer_routes import developer_bp
+# Import models to register them with SQLAlchemy
+from models import *
 
-# === REGISTER BLUEPRINTS ===
+# Register Blueprints
+from routes.auth_routes import auth_bp
+from routes.admin_routes import admin_bp
+from routes.teacher_routes import teacher_bp
+from routes.guardian_routes import guardian_bp
+from routes.bursar_routes import bursar_bp
+from routes.principal_routes import principal_bp
+from routes.deputy_routes import deputy_bp
+from routes.developer_routes import developer_bp
+
 app.register_blueprint(auth_bp)
-app.register_blueprint(admin_bp, url_prefix='/admin')
-app.register_blueprint(teacher_bp, url_prefix='/teacher')
-app.register_blueprint(guardian_bp, url_prefix='/guardian')
-app.register_blueprint(bursar_bp, url_prefix='/bursar')
-app.register_blueprint(principal_bp, url_prefix='/principal')
-app.register_blueprint(deputy_bp, url_prefix='/deputy')
-app.register_blueprint(developer_bp, url_prefix='/developer')
+app.register_blueprint(admin_bp)
+app.register_blueprint(teacher_bp)
+app.register_blueprint(guardian_bp)
+app.register_blueprint(bursar_bp)
+app.register_blueprint(principal_bp)
+app.register_blueprint(deputy_bp)
+app.register_blueprint(developer_bp)
 
-# === CREATE TABLES ===
-with app.app_context():
-    db.create_all()
-
-# === RUN SERVER ===
+# Main entry point
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
