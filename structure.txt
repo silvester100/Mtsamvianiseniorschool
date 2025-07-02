@@ -1,0 +1,21 @@
+/your-flask-app/
+│
+├── app.py
+├── requirements.txt
+├── Procfile
+├── runtime.txt
+│
+├── /routes/             ← Flask blueprints
+├── /templates/          ← HTML templates
+├── /static/             ← CSS, JS, images
+├── /backups/            ← File backups (like your developer backups)
+├── /logs/               ← System logs (optional)
+├── /scripts/            ← Setup or utility scripts
+│   ├── db_setup.py
+│   ├── dummy_data.py
+│   └── migrate.py
+├── /docs/               ← Markdown docs, dev notes, architecture
+│   └── README.md
+├── /archive/            ← PDF reports, student cards, exports
+│
+└── .env                 ← (local use only)
