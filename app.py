@@ -1,45 +1,33 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from config import Config
 from dotenv import load_dotenv
+import os
 
-# Load environment variables
+# Load .env (works locally; Render uses dashboard for secrets)
 load_dotenv()
 
-# Initialize app
 app = Flask(__name__)
-app.config.from_object(Config)
 
-# Setup database
+# Use DATABASE_URL from environment
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)
 
-# === Register all blueprints ===
-from routes.auth_routes import auth_bp
-from routes.admin_routes import admin_bp
-from routes.teacher_routes import teacher_bp
-from routes.guardian_routes import guardian_bp
-from routes.developer_routes import developer_bp
-from routes.bursar_routes import bursar_bp
-from routes.principal_routes import principal_bp
-from routes.deputy_routes import deputy_bp
-from routes.archive_routes import archive_bp
-from routes.timetable_routes import timetable_bp
-from routes.otp_routes import otp_bp
+# Sample model
+class Student(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
 
-app.register_blueprint(auth_bp)
-app.register_blueprint(admin_bp)
-app.register_blueprint(teacher_bp)
-app.register_blueprint(guardian_bp)
-app.register_blueprint(developer_bp)
-app.register_blueprint(bursar_bp)
-app.register_blueprint(principal_bp)
-app.register_blueprint(deputy_bp)
-app.register_blueprint(archive_bp)
-app.register_blueprint(timetable_bp)
-app.register_blueprint(otp_bp)
+@app.before_first_request
+def create_tables():
+    db.create_all()
 
-# === Main entry point ===
+@app.route('/')
+def home():
+    return "✅ App is live! Flask + PostgreSQL on Render."
+
+# Run app using Render's port
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
