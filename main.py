@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 import os
 
-# Load environment variables (.env for local; dashboard for Render)
+# Load environment variables (.env for local; use Render Dashboard in production)
 load_dotenv()
 
 app = Flask(__name__)
@@ -21,9 +21,8 @@ class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
-# Create tables on first request
-@app.before_first_request
-def create_tables():
+# ✅ Create tables at startup using app context (Flask 3+ compatible)
+with app.app_context():
     db.create_all()
 
 # Homepage route with HTML
@@ -57,11 +56,11 @@ def home():
     </html>
     """
 
-# Simple ping route for testing
+# Simple ping route
 @app.route('/ping')
 def ping():
     return "✅ Pong — app is alive!"
 
-# Run app (only when running locally)
+# Local development only
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 10000)))
